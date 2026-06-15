@@ -208,9 +208,9 @@ exports.resendVerification = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Email address is required' });
     }
 
-    const user = await User.findOne({ email });
+    const user = await User.findOne({ email: email.toLowerCase().trim() });
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User not found' });
+      return res.status(404).json({ success: false, message: `User not found for email: ${email}` });
     }
 
     if (user.isVerified) {

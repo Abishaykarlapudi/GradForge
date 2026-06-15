@@ -19,18 +19,13 @@ const VerifyEmail = () => {
   const [timer, setTimer] = useState(10);
   const [resending, setResending] = useState(false);
   const [resendMsg, setResendMsg] = useState('');
-  const [showEmailInput, setShowEmailInput] = useState(false);
 
   // Load URL parameters on mount
   useEffect(() => {
     const urlToken = searchParams.get('token');
     const urlEmail = searchParams.get('email');
     if (urlToken) setToken(urlToken);
-    if (urlEmail) {
-      setEmail(urlEmail);
-    } else {
-      setShowEmailInput(true); // Let them type if email isn't in URL
-    }
+    if (urlEmail) setEmail(urlEmail);
   }, [searchParams]);
 
   // Countdown timer effect
@@ -149,49 +144,23 @@ const VerifyEmail = () => {
           </form>
 
           {/* Resend mail block */}
-          <div className="p-6 rounded-2xl bg-white/5 border border-white/5 space-y-4">
-            <div className="flex flex-col gap-3">
-              {showEmailInput && (
-                <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] text-gray-400 uppercase font-semibold">Resend Email Address</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="alex@university.edu"
-                    className="glass-input text-xs"
-                  />
-                </div>
+          <div className="flex items-center justify-between text-xs pt-4 border-t border-white/5">
+            <span className="text-gray-400">Didn't receive the email?</span>
+            <button
+              type="button"
+              onClick={handleResend}
+              disabled={timer > 0 || resending || !email.trim()}
+              className="text-purple-400 font-bold hover:text-purple-300 disabled:text-gray-500 flex items-center gap-1 transition"
+            >
+              {resending ? (
+                <Loader size={12} className="animate-spin" />
+              ) : (
+                <RefreshCw size={12} />
               )}
-
-              <div className="flex items-center justify-between text-xs pt-1">
-                <span className="text-gray-400">Didn't receive the email?</span>
-                <button
-                  type="button"
-                  onClick={handleResend}
-                  disabled={timer > 0 || resending || !email.trim()}
-                  className="text-purple-400 font-bold hover:text-purple-300 disabled:text-gray-500 flex items-center gap-1 transition"
-                >
-                  {resending ? (
-                    <Loader size={12} className="animate-spin" />
-                  ) : (
-                    <RefreshCw size={12} />
-                  )}
-                  <span>
-                    {timer > 0 ? `Resend Code (${timer}s)` : 'Resend Code'}
-                  </span>
-                </button>
-              </div>
-
-              {!showEmailInput && (
-                <button 
-                  onClick={() => setShowEmailInput(true)} 
-                  className="text-left text-[10px] text-purple-400/80 hover:text-purple-300 transition underline"
-                >
-                  Send to a different email address?
-                </button>
-              )}
-            </div>
+              <span>
+                {timer > 0 ? `Resend Code (${timer}s)` : 'Resend Code'}
+              </span>
+            </button>
           </div>
         </div>
       )}
