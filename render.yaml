@@ -1,0 +1,28 @@
+services:
+  - type: web
+    name: gradforge-platform
+    env: node
+    plan: free
+    buildCommand: npm install && npm install --prefix server && npm install --prefix client && npm run build --prefix client
+    startCommand: node server/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: 10000
+      - key: MONGO_URI
+        placeholder: "Insert your MongoDB connection URI (e.g. Atlas connection string)"
+      - key: JWT_SECRET
+        generateValue: true
+      - key: AI_PROVIDER
+        value: gemini
+      - key: GEMINI_API_KEY
+        placeholder: "Insert your Google Gemini API key"
+      - key: OPENAI_API_KEY
+        placeholder: "Insert your OpenAI API key (optional)"
+      - key: CLOUDINARY_CLOUD_NAME
+        placeholder: "Insert Cloudinary Cloud Name"
+      - key: CLOUDINARY_API_KEY
+        placeholder: "Insert Cloudinary API Key"
+      - key: CLOUDINARY_API_SECRET
+        placeholder: "Insert Cloudinary API Secret"
