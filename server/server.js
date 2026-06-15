@@ -21,7 +21,7 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Connect to MongoDB
-const mongoURI = process.env.MONGO_URI || 'mongodb://127.0.0.1:27017/gradforge';
+const mongoURI = process.env.MONGO_URI || 'mongodb+srv://rocksun:Test12345@job-portal.r8efxop.mongodb.net/gradforge?appName=job-portal';
 mongoose.connect(mongoURI)
   .then(() => console.log('[MongoDB] Connected successfully.'))
   .catch((err) => {
