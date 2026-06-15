@@ -5,7 +5,7 @@ import axios from 'axios';
 import { Key, Loader, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
 
 const VerifyEmail = () => {
-  const { verifyEmail } = useContext(AuthContext);
+  const { verifyEmail, user } = useContext(AuthContext);
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
@@ -25,8 +25,12 @@ const VerifyEmail = () => {
     const urlToken = searchParams.get('token');
     const urlEmail = searchParams.get('email');
     if (urlToken) setToken(urlToken);
-    if (urlEmail) setEmail(urlEmail);
-  }, [searchParams]);
+    if (urlEmail) {
+      setEmail(urlEmail);
+    } else if (user && user.email) {
+      setEmail(user.email);
+    }
+  }, [searchParams, user]);
 
   // Countdown timer effect
   useEffect(() => {
@@ -89,10 +93,26 @@ const VerifyEmail = () => {
 
   return (
     <div className="max-w-md mx-auto px-4 py-16 sm:py-24 text-left">
-      <div className="text-center mb-10">
+      <div className="text-center mb-6">
         <h1 className="text-3xl font-extrabold text-white mb-2">Verify Email</h1>
-        <p className="text-gray-400 text-xs">Enter your registration verification token to unlock access.</p>
+        <p className="text-gray-400 text-xs leading-relaxed">
+          Since we do not send verification emails to your mailbox, your verification token is generated and kept on-screen below.
+        </p>
       </div>
+
+      {/* On-screen Security Token Card */}
+      {!success && (
+        <div className="mb-6 p-5 rounded-2xl bg-gradient-to-r from-purple-900/20 via-[#121626] to-[#0a0b10] border border-purple-500/20 text-center space-y-2 relative overflow-hidden">
+          <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-[40px] pointer-events-none"></div>
+          <span className="text-[10px] uppercase font-bold tracking-wider text-purple-400 block">Active Verification OTP Code</span>
+          <div className="text-3xl font-mono font-extrabold tracking-widest text-white select-all my-1 bg-white/5 py-2 rounded-xl border border-white/5">
+            {token || '------'}
+          </div>
+          <p className="text-[10px] text-gray-500 font-medium">
+            {email ? `Generated for: ${email}` : 'No email detected. Please register or log in first.'}
+          </p>
+        </div>
+      )}
 
       {error && (
         <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2">
@@ -147,7 +167,7 @@ const VerifyEmail = () => {
 
           {/* Resend mail block */}
           <div className="flex items-center justify-between text-xs pt-4 border-t border-white/5">
-            <span className="text-gray-400">Didn't receive the email?</span>
+            <span className="text-gray-400">Need a new code?</span>
             <button
               type="button"
               onClick={handleResend}

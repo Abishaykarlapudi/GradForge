@@ -43,19 +43,11 @@ exports.register = async (req, res, next) => {
       status: 'active'
     });
 
-    // Send verification email
-    const verifyUrl = `http://localhost:3000/verify-email?token=${verificationToken}`;
-    const text = `Welcome to GradForge! Please verify your email using the following link or token: ${verifyUrl} \n\nVerification Token: ${verificationToken}`;
-    await sendMail({
-      to: user.email,
-      subject: 'Verify your GradForge Account',
-      text,
-      html: `<p>Welcome to GradForge!</p><p>Please click <a href="${verifyUrl}">here</a> to verify your account or use the token below:</p><strong>${verificationToken}</strong>`
-    });
+    // User registration complete. Exposing token directly for on-screen prompt bypass.
 
     res.status(201).json({
       success: true,
-      message: 'User registered successfully. Please verify your email.',
+      message: 'User registered successfully. Verification OTP generated.',
       verificationToken
     });
   } catch (error) {
@@ -156,7 +148,11 @@ exports.forgotPassword = async (req, res, next) => {
       html: `<p>You requested a password reset.</p><p>Please click <a href="${resetUrl}">here</a> to reset your password or use the token below:</p><strong>${resetToken}</strong>`
     });
 
-    res.json({ success: true, message: 'Reset email sent.' });
+    res.json({
+      success: true,
+      message: 'Reset token generated successfully.',
+      resetToken
+    });
   } catch (error) {
     next(error);
   }
@@ -230,19 +226,11 @@ exports.resendVerification = async (req, res, next) => {
     user.verificationToken = verificationToken;
     await user.save();
 
-    // Send mock mail
-    const verifyUrl = `http://localhost:3000/verify-email?token=${verificationToken}&email=${email}`;
-    const text = `Welcome back! Please verify your email using the following link or token: ${verifyUrl} \n\nVerification Token: ${verificationToken}`;
-    await sendMail({
-      to: user.email,
-      subject: 'Verify your GradForge Account (Resent)',
-      text,
-      html: `<p>Please verify your account or use the token below:</p><strong>${verificationToken}</strong>`
-    });
+    // Token regenerated. Exposing token directly for on-screen prompt bypass.
 
     res.json({
       success: true,
-      message: 'Verification token resent successfully.',
+      message: 'Verification OTP generated successfully.',
       verificationToken
     });
   } catch (error) {

@@ -10,6 +10,8 @@ const ForgotPassword = () => {
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
+  const [resetToken, setResetToken] = useState('');
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
@@ -19,6 +21,7 @@ const ForgotPassword = () => {
     try {
       const res = await forgotPassword(email);
       if (res.success) {
+        setResetToken(res.resetToken || '');
         setSuccess(true);
       } else {
         setError(res.message || 'Something went wrong.');
@@ -48,12 +51,17 @@ const ForgotPassword = () => {
       {success ? (
         <div className="p-8 rounded-2xl glass-panel text-center flex flex-col items-center gap-4">
           <CheckCircle className="text-emerald-400" size={40} />
-          <h3 className="text-lg font-bold text-white">Reset Email Sent</h3>
+          <h3 className="text-lg font-bold text-white">Reset Token Generated</h3>
           <p className="text-gray-400 text-xs leading-relaxed">
-            Please check the backend console terminal logs. A password reset token and URL link have been printed.
+            Since we do not send emails, your reset token has been generated and is shown below. Please copy it or proceed directly to reset your password.
           </p>
-          <Link to="/reset-password" className="mt-4 w-full py-3 btn-cyber text-xs font-semibold">
-            Proceed to Enter Token
+          {resetToken && (
+            <div className="w-full p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-xs font-mono text-purple-400 select-all font-bold">
+              {resetToken}
+            </div>
+          )}
+          <Link to={`/reset-password?token=${resetToken}`} className="mt-4 w-full py-3 btn-cyber text-xs font-semibold">
+            Proceed to Reset Password
           </Link>
         </div>
       ) : (
