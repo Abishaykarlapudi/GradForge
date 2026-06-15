@@ -1,0 +1,19 @@
+# Dependency directories
+node_modules/
+client/node_modules/
+server/node_modules/
+
+# Production build directories
+dist/
+client/dist/
+
+# Local env configs
+.env
+
+# Upload temporary files
+server/uploads/
+uploads/
+
+# OS files
+.DS_Store
+Thumbs.db
