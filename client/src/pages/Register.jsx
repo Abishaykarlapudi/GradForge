@@ -12,6 +12,7 @@ const Register = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+  const [verifyToken, setVerifyToken] = useState('');
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,6 +23,7 @@ const Register = () => {
     try {
       const res = await register(name, email, password);
       if (res.success) {
+        setVerifyToken(res.verificationToken || '');
         setSuccess(true);
       } else {
         setError(res.message || 'Registration failed.');
@@ -53,10 +55,15 @@ const Register = () => {
           <CheckCircle className="text-emerald-400" size={40} />
           <h3 className="text-lg font-bold text-white">Registration Successful!</h3>
           <p className="text-gray-400 text-xs leading-relaxed">
-            Please check your email console logs. A verification link and token have been generated for you to verify your email.
+            Your account was registered. For testing convenience, copy the token below to verify your email.
           </p>
-          <Link to="/verify-email" className="mt-4 w-full py-3 btn-cyber text-xs font-semibold flex items-center justify-center gap-2">
-            <span>Go to Email Verification</span>
+          {verifyToken && (
+            <div className="w-full p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-xs font-mono text-purple-400 select-all font-bold">
+              {verifyToken}
+            </div>
+          )}
+          <Link to={`/verify-email?token=${verifyToken}`} className="mt-4 w-full py-3 btn-cyber text-xs font-semibold flex items-center justify-center gap-2">
+            <span>Verify Email Now</span>
             <ArrowRight size={14} />
           </Link>
         </div>
