@@ -27,7 +27,7 @@ exports.register = async (req, res, next) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const verificationToken = crypto.randomBytes(20).toString('hex');
+    const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
 
     const user = await User.create({
       name,
@@ -117,7 +117,16 @@ exports.verifyEmail = async (req, res, next) => {
 
     res.json({
       success: true,
-      message: 'Email verified successfully. You can now log in.'
+      message: 'Email verified and logged in successfully.',
+      token: generateToken(user._id),
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isVerified: user.isVerified,
+        plan: user.plan
+      }
     });
   } catch (error) {
     next(error);
@@ -217,7 +226,7 @@ exports.resendVerification = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Account is already verified' });
     }
 
-    const verificationToken = crypto.randomBytes(20).toString('hex');
+    const verificationToken = Math.floor(100000 + Math.random() * 900000).toString();
     user.verificationToken = verificationToken;
     await user.save();
 

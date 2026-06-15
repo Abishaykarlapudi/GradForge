@@ -51,7 +51,7 @@ const VerifyEmail = () => {
       const res = await verifyEmail(token);
       if (res.success) {
         setSuccess(true);
-        setTimeout(() => navigate('/login'), 2500);
+        setTimeout(() => navigate('/dashboard'), 2000);
       } else {
         setError(res.message || 'Email verification failed.');
       }
@@ -113,28 +113,30 @@ const VerifyEmail = () => {
           <CheckCircle className="text-emerald-400" size={40} />
           <h3 className="text-lg font-bold text-white">Account Verified!</h3>
           <p className="text-gray-400 text-xs leading-relaxed">
-            Your email is now verified. Redirecting you to login...
+            Your email is now verified. Redirecting you to your dashboard...
           </p>
         </div>
       ) : (
         <div className="space-y-6">
           <form onSubmit={handleSubmit} className="p-8 rounded-2xl glass-panel space-y-6">
             <div className="flex flex-col gap-2">
-              <label className="text-xs font-semibold text-gray-300">Verification Token</label>
+              <label className="text-xs font-semibold text-gray-300">Enter 6-Digit OTP</label>
               <div className="relative">
                 <Key className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500" size={16} />
                 <input
                   type="text"
                   required
+                  maxLength={6}
+                  pattern="[0-9]{6}"
                   value={token}
-                  onChange={(e) => setToken(e.target.value)}
-                  placeholder="Paste code from console logs"
-                  className="w-full pl-10 pr-4 py-2.5 glass-input text-sm"
+                  onChange={(e) => setToken(e.target.value.replace(/[^0-9]/g, ''))}
+                  placeholder="e.g. 482015"
+                  className="w-full pl-10 pr-4 py-2.5 glass-input text-sm tracking-widest font-mono text-center font-bold"
                 />
               </div>
             </div>
 
-            <button type="submit" disabled={loading || !token.trim()} className="w-full py-3 btn-cyber flex items-center justify-center gap-2 font-semibold text-sm">
+            <button type="submit" disabled={loading || token.length !== 6} className="w-full py-3 btn-cyber flex items-center justify-center gap-2 font-semibold text-sm">
               {loading ? (
                 <Loader size={16} className="animate-spin text-white" />
               ) : (
