@@ -62,7 +62,7 @@ const Register = () => {
               {verifyToken}
             </div>
           )}
-          <Link to={`/verify-email?token=${verifyToken}`} className="mt-4 w-full py-3 btn-cyber text-xs font-semibold flex items-center justify-center gap-2">
+          <Link to={`/verify-email?token=${verifyToken}&email=${email}`} className="mt-4 w-full py-3 btn-cyber text-xs font-semibold flex items-center justify-center gap-2">
             <span>Verify Email Now</span>
             <ArrowRight size={14} />
           </Link>

@@ -199,3 +199,44 @@ exports.getMe = async (req, res, next) => {
     next(error);
   }
 };
+
+exports.resendVerification = async (req, res, next) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ success: false, message: 'Email address is required' });
+    }
+
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found' });
+    }
+
+    if (user.isVerified) {
+      return res.status(400).json({ success: false, message: 'Account is already verified' });
+    }
+
+    const verificationToken = crypto.randomBytes(20).toString('hex');
+    user.verificationToken = verificationToken;
+    await user.save();
+
+    // Send mock mail
+    const verifyUrl = `http://localhost:3000/verify-email?token=${verificationToken}&email=${email}`;
+    const text = `Welcome back! Please verify your email using the following link or token: ${verifyUrl} \n\nVerification Token: ${verificationToken}`;
+    await sendMail({
+      to: user.email,
+      subject: 'Verify your GradForge Account (Resent)',
+      text,
+      html: `<p>Please verify your account or use the token below:</p><strong>${verificationToken}</strong>`
+    });
+
+    res.json({
+      success: true,
+      message: 'Verification token resent successfully.',
+      verificationToken
+    });
+  } catch (error) {
+    next(error);
+  }
+};
