@@ -1,0 +1,14 @@
+{
+  "name": "gradforge-root",
+  "version": "1.0.0",
+  "description": "GradForge Student SaaS platform root",
+  "scripts": {
+    "install-all": "npm install && npm install --prefix server && npm install --prefix client",
+    "dev": "concurrently \"npm run dev --prefix client\" \"node server/server.js\"",
+    "start": "node server/server.js",
+    "build": "npm run build --prefix client"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
