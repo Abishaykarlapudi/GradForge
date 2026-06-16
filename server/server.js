@@ -38,6 +38,17 @@ app.use(express.urlencoded({ extended: true }));
 // Serve local file uploads statically
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Middleware to block API requests until database connection is ready
+app.use('/api', (req, res, next) => {
+  if (mongoose.connection.readyState !== 1) {
+    return res.status(503).json({
+      success: false,
+      message: 'Database connection is still establishing. Please wait a moment and try again.'
+    });
+  }
+  next();
+});
+
 // Bind routes
 app.use('/api/auth', authRoutes);
 app.use('/api/resumes', resumeRoutes);
