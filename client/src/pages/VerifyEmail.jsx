@@ -140,9 +140,9 @@ const VerifyEmail = () => {
       {success ? (
         <div className="p-8 rounded-2xl glass-panel text-center flex flex-col items-center gap-4">
           <CheckCircle className="text-emerald-400" size={40} />
-          <h3 className="text-lg font-bold text-white">Account Verified!</h3>
+          <h3 className="text-lg font-bold text-white">Registration Successful!</h3>
           <p className="text-gray-400 text-xs leading-relaxed">
-            Your email is now verified. Redirecting you to your dashboard...
+            Your registration is now complete and your email has been verified. Redirecting to your dashboard...
           </p>
         </div>
       ) : (

@@ -53,7 +53,7 @@ const Register = () => {
       {success ? (
         <div className="p-8 rounded-2xl glass-panel text-center flex flex-col items-center gap-4">
           <CheckCircle className="text-emerald-400" size={40} />
-          <h3 className="text-lg font-bold text-white">Registration Successful!</h3>
+          <h3 className="text-lg font-bold text-white">Verification Code Sent!</h3>
           <p className="text-gray-400 text-xs leading-relaxed">
             We have sent a 6-digit verification code to your email. Please check your inbox and enter the code to verify your account.
           </p>
