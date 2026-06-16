@@ -45,8 +45,8 @@ exports.register = async (req, res, next) => {
       { upsert: true, new: true, setDefaultsOnInsert: true }
     );
 
-    // Send OTP to email
-    await sendMail({
+    // Send OTP to email asynchronously in the background (no await)
+    sendMail({
       to: email.toLowerCase().trim(),
       subject: 'GradForge Email Verification Code',
       text: `Your GradForge verification OTP code is: ${otp}. It will expire in 10 minutes.`,
@@ -60,6 +60,8 @@ exports.register = async (req, res, next) => {
           <p style="color: #6b7280; font-size: 12px; text-align: center;">This code is valid for 10 minutes. If you did not request this code, please ignore this email.</p>
         </div>
       `
+    }).catch(err => {
+      console.error('[ASYNC SMTP ERROR] Failed to send email in background:', err.message);
     });
 
     res.status(201).json({
@@ -298,8 +300,8 @@ exports.resendVerification = async (req, res, next) => {
     tempUser.createdAt = Date.now(); // reset the 10-minute expiry
     await tempUser.save();
 
-    // Resend the email
-    await sendMail({
+    // Resend the email asynchronously in the background (no await)
+    sendMail({
       to: tempUser.email,
       subject: 'GradForge Email Verification Code (Resend)',
       text: `Your new GradForge verification OTP code is: ${otp}. It will expire in 10 minutes.`,
@@ -313,6 +315,8 @@ exports.resendVerification = async (req, res, next) => {
           <p style="color: #6b7280; font-size: 12px; text-align: center;">This code is valid for 10 minutes. If you did not request this code, please ignore this email.</p>
         </div>
       `
+    }).catch(err => {
+      console.error('[ASYNC SMTP ERROR] Failed to resend email in background:', err.message);
     });
 
     res.json({
