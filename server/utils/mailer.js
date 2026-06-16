@@ -25,6 +25,12 @@ const sendMail = async ({ to, subject, text, html }) => {
         return;
       } else {
         console.error(`[RESEND HTTP EMAIL ERROR] Resend rejected request:`, data);
+        if (data.name === 'validation_error' || data.message?.includes('testing emails')) {
+          console.warn(`\n================== [RESEND SANDBOX LIMITATION] ==================`);
+          console.warn(`WARNING: Resend is in Sandbox mode. You can ONLY send emails to the address you registered with (e.g. gradforge4@gmail.com).`);
+          console.warn(`To send emails to other users, verify your domain at: https://resend.com/domains`);
+          console.warn(`==================================================================\n`);
+        }
       }
     } catch (error) {
       console.error(`[RESEND HTTP EMAIL ERROR] Failed to send via Resend API:`, error.message);
