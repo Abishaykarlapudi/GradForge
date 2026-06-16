@@ -23,9 +23,7 @@ const VerifyEmail = () => {
 
   // Load URL parameters on mount
   useEffect(() => {
-    const urlToken = searchParams.get('token');
     const urlEmail = searchParams.get('email');
-    if (urlToken) setToken(urlToken);
     if (urlEmail) {
       setEmail(urlEmail);
     } else if (user && user.email) {
@@ -96,9 +94,6 @@ const VerifyEmail = () => {
       const res = await axios.post('/api/auth/resend-verification', { email });
       if (res.data.success) {
         setResendMsg('A new verification code has been sent to your email!');
-        if (res.data.verificationToken) {
-          setToken(res.data.verificationToken); // Autofill for preview testing bypass
-        }
         setTimer(60); // Restart 60s cooldown timer
         setExpiryTimer(600); // Reset OTP expiry to 10 minutes
       }
@@ -119,19 +114,7 @@ const VerifyEmail = () => {
         </p>
       </div>
 
-      {/* On-screen Security Token Card */}
-      {!success && (
-        <div className="mb-6 p-5 rounded-2xl bg-gradient-to-r from-purple-900/20 via-[#121626] to-[#0a0b10] border border-purple-500/20 text-center space-y-2 relative overflow-hidden">
-          <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-[40px] pointer-events-none"></div>
-          <span className="text-[10px] uppercase font-bold tracking-wider text-purple-400 block">Active Verification OTP Code (Preview Mode helper)</span>
-          <div className="text-3xl font-mono font-extrabold tracking-widest text-white select-all my-1 bg-white/5 py-2 rounded-xl border border-white/5">
-            {token || '------'}
-          </div>
-          <p className="text-[10px] text-gray-500 font-medium">
-            {email ? `Generated for: ${email}` : 'No email detected. Please register or log in first.'}
-          </p>
-        </div>
-      )}
+
 
       {error && (
         <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2">

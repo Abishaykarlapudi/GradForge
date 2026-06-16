@@ -55,14 +55,9 @@ const Register = () => {
           <CheckCircle className="text-emerald-400" size={40} />
           <h3 className="text-lg font-bold text-white">Registration Successful!</h3>
           <p className="text-gray-400 text-xs leading-relaxed">
-            We have sent a 6-digit verification code to your email. Please check your inbox and copy it, or proceed directly using the code displayed below for quick verification.
+            We have sent a 6-digit verification code to your email. Please check your inbox and enter the code to verify your account.
           </p>
-          {verifyToken && (
-            <div className="w-full p-3 bg-purple-500/10 border border-purple-500/20 rounded-xl text-xs font-mono text-purple-400 select-all font-bold">
-              {verifyToken}
-            </div>
-          )}
-          <Link to={`/verify-email?token=${verifyToken}&email=${email}`} className="mt-4 w-full py-3 btn-cyber text-xs font-semibold flex items-center justify-center gap-2">
+          <Link to={`/verify-email?email=${email}`} className="mt-4 w-full py-3 btn-cyber text-xs font-semibold flex items-center justify-center gap-2">
             <span>Verify Email Now</span>
             <ArrowRight size={14} />
           </Link>
