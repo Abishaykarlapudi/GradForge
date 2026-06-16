@@ -1,12 +1,6 @@
 const nodemailer = require('nodemailer');
 
 const sendMail = async ({ to, subject, text, html }) => {
-  console.log(`\n================== [MOCK EMAIL] ==================`);
-  console.log(`TO:      ${to}`);
-  console.log(`SUBJECT: ${subject}`);
-  console.log(`CONTENT: ${text}`);
-  console.log(`==================================================\n`);
-
   // Check if SMTP settings are fully declared
   if (process.env.SMTP_HOST && process.env.SMTP_USER && process.env.SMTP_PASS) {
     try {
@@ -31,6 +25,13 @@ const sendMail = async ({ to, subject, text, html }) => {
     } catch (error) {
       console.error(`[SMTP EMAIL ERROR] Failed to send email via SMTP:`, error.message);
     }
+  } else {
+    console.log(`\n================== [MOCK EMAIL] ==================`);
+    console.log(`TO:      ${to}`);
+    console.log(`SUBJECT: ${subject}`);
+    console.log(`CONTENT: ${text}`);
+    console.log(`WARNING: SMTP_HOST, SMTP_USER, or SMTP_PASS is not configured in your .env. Email was NOT sent via SMTP!`);
+    console.log(`==================================================\n`);
   }
 };
 
