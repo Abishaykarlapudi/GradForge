@@ -2,7 +2,7 @@ import React, { useState, useContext, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
-import { Key, Loader, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { Key, Loader, CheckCircle, AlertCircle, RefreshCw, Timer } from 'lucide-react';
 
 const VerifyEmail = () => {
   const { verifyEmail, user } = useContext(AuthContext);
@@ -16,7 +16,8 @@ const VerifyEmail = () => {
 
   // Resend OTP variables
   const [email, setEmail] = useState('');
-  const [timer, setTimer] = useState(10);
+  const [timer, setTimer] = useState(60); // 60s cooldown for resending
+  const [expiryTimer, setExpiryTimer] = useState(600); // 10 minutes OTP lifespan
   const [resending, setResending] = useState(false);
   const [resendMsg, setResendMsg] = useState('');
 
@@ -32,7 +33,7 @@ const VerifyEmail = () => {
     }
   }, [searchParams, user]);
 
-  // Countdown timer effect
+  // Countdown timer effect for resend cooldown
   useEffect(() => {
     let interval = null;
     if (timer > 0) {
@@ -43,16 +44,33 @@ const VerifyEmail = () => {
     return () => clearInterval(interval);
   }, [timer]);
 
+  // Expiry timer effect
+  useEffect(() => {
+    let interval = null;
+    if (expiryTimer > 0 && !success) {
+      interval = setInterval(() => {
+        setExpiryTimer(prev => prev - 1);
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [expiryTimer, success]);
+
+  const formatExpiryTime = (seconds) => {
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!token.trim()) return;
+    if (!token.trim() || expiryTimer <= 0) return;
 
     setLoading(true);
     setError('');
     setSuccess(false);
 
     try {
-      const res = await verifyEmail(token);
+      const res = await verifyEmail(token, email);
       if (res.success) {
         setSuccess(true);
         setTimeout(() => navigate('/dashboard'), 2000);
@@ -77,15 +95,16 @@ const VerifyEmail = () => {
     try {
       const res = await axios.post('/api/auth/resend-verification', { email });
       if (res.data.success) {
-        setResendMsg('A new verification code has been generated!');
+        setResendMsg('A new verification code has been sent to your email!');
         if (res.data.verificationToken) {
           setToken(res.data.verificationToken); // Autofill for preview testing bypass
         }
-        setTimer(10); // Restart countdown timer
+        setTimer(60); // Restart 60s cooldown timer
+        setExpiryTimer(600); // Reset OTP expiry to 10 minutes
       }
     } catch (err) {
       console.error(err);
-      setError(err.response?.data?.message || 'Resending failed. Verify email belongs to registered user.');
+      setError(err.response?.data?.message || 'Resending failed.');
     } finally {
       setResending(false);
     }
@@ -96,7 +115,7 @@ const VerifyEmail = () => {
       <div className="text-center mb-6">
         <h1 className="text-3xl font-extrabold text-white mb-2">Verify Email</h1>
         <p className="text-gray-400 text-xs leading-relaxed">
-          Since we do not send verification emails to your mailbox, your verification token is generated and kept on-screen below.
+          We have sent a 6-digit verification code to your email. Enter the code below to complete your registration.
         </p>
       </div>
 
@@ -104,7 +123,7 @@ const VerifyEmail = () => {
       {!success && (
         <div className="mb-6 p-5 rounded-2xl bg-gradient-to-r from-purple-900/20 via-[#121626] to-[#0a0b10] border border-purple-500/20 text-center space-y-2 relative overflow-hidden">
           <div className="absolute top-0 right-0 w-32 h-32 bg-purple-500/5 rounded-full blur-[40px] pointer-events-none"></div>
-          <span className="text-[10px] uppercase font-bold tracking-wider text-purple-400 block">Active Verification OTP Code</span>
+          <span className="text-[10px] uppercase font-bold tracking-wider text-purple-400 block">Active Verification OTP Code (Preview Mode helper)</span>
           <div className="text-3xl font-mono font-extrabold tracking-widest text-white select-all my-1 bg-white/5 py-2 rounded-xl border border-white/5">
             {token || '------'}
           </div>
@@ -128,6 +147,13 @@ const VerifyEmail = () => {
         </div>
       )}
 
+      {expiryTimer <= 0 && !success && (
+        <div className="mb-6 p-4 rounded-xl bg-red-500/10 border border-red-500/20 text-red-400 text-xs flex items-center gap-2">
+          <AlertCircle size={16} />
+          <span>Verification code has expired. Please register again to request a new code.</span>
+        </div>
+      )}
+
       {success ? (
         <div className="p-8 rounded-2xl glass-panel text-center flex flex-col items-center gap-4">
           <CheckCircle className="text-emerald-400" size={40} />
@@ -148,15 +174,28 @@ const VerifyEmail = () => {
                   required
                   maxLength={6}
                   pattern="[0-9]{6}"
+                  disabled={expiryTimer <= 0}
                   value={token}
                   onChange={(e) => setToken(e.target.value.replace(/[^0-9]/g, ''))}
                   placeholder="e.g. 482015"
-                  className="w-full pl-10 pr-4 py-2.5 glass-input text-sm tracking-widest font-mono text-center font-bold"
+                  className="w-full pl-10 pr-4 py-2.5 glass-input text-sm tracking-widest font-mono text-center font-bold disabled:opacity-50"
                 />
               </div>
             </div>
 
-            <button type="submit" disabled={loading || token.length !== 6} className="w-full py-3 btn-cyber flex items-center justify-center gap-2 font-semibold text-sm">
+            {/* Expiry timer display */}
+            <div className="flex justify-between items-center text-xs text-gray-400 border-t border-white/5 pt-4">
+              <span className="flex items-center gap-1.5"><Timer size={14} /> Code Expires In:</span>
+              <span className={`font-mono font-bold ${expiryTimer < 60 ? 'text-red-400 animate-pulse' : 'text-purple-400'}`}>
+                {expiryTimer > 0 ? formatExpiryTime(expiryTimer) : 'Expired'}
+              </span>
+            </div>
+
+            <button 
+              type="submit" 
+              disabled={loading || token.length !== 6 || expiryTimer <= 0} 
+              className="w-full py-3 btn-cyber flex items-center justify-center gap-2 font-semibold text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+            >
               {loading ? (
                 <Loader size={16} className="animate-spin text-white" />
               ) : (

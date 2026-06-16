@@ -63,8 +63,8 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
   };
 
-  const verifyEmail = async (token) => {
-    const res = await axios.post('/api/auth/verify-email', { token });
+  const verifyEmail = async (token, email) => {
+    const res = await axios.post('/api/auth/verify-email', { token, email });
     if (res.data.success && res.data.token) {
       setAuthToken(res.data.token);
       setUser(res.data.user);
