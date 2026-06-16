@@ -1,5 +1,5 @@
 import React, { useState, useContext, useEffect } from 'react';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { AuthContext } from '../context/AuthContext';
 import axios from 'axios';
 import { Key, Loader, CheckCircle, AlertCircle, RefreshCw, Timer } from 'lucide-react';
@@ -110,7 +110,7 @@ const VerifyEmail = () => {
       <div className="text-center mb-6">
         <h1 className="text-3xl font-extrabold text-white mb-2">Verify Email</h1>
         <p className="text-gray-400 text-xs leading-relaxed">
-          We have sent a 6-digit verification code to your email. Enter the code below to complete your registration.
+          We have sent a 6-digit verification code to <span className="text-purple-400 font-semibold">{email || 'your email'}</span>. Enter the code below to complete your registration.
         </p>
       </div>
 
@@ -205,6 +205,12 @@ const VerifyEmail = () => {
                 {timer > 0 ? `Resend Code (${timer}s)` : 'Resend Code'}
               </span>
             </button>
+          </div>
+
+          <div className="text-center pt-4 border-t border-white/5">
+            <Link to="/register" className="text-xs text-gray-500 hover:text-purple-400 transition font-semibold">
+              ← Back to Sign Up / Change Email
+            </Link>
           </div>
         </div>
       )}
