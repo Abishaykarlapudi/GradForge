@@ -1,5 +1,4 @@
 const User = require('../models/User');
-const TemporaryUser = require('../models/TemporaryUser');
 const Subscription = require('../models/Subscription');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
@@ -20,7 +19,8 @@ exports.register = async (req, res, next) => {
       return res.status(400).json({ success: false, message: 'Please provide name, email, and password' });
     }
 
-    const userExists = await User.findOne({ email: email.toLowerCase().trim() });
+    const emailKey = email.toLowerCase().trim();
+    const userExists = await User.findOne({ email: emailKey });
     if (userExists) {
       return res.status(400).json({ success: false, message: 'User already exists' });
     }
@@ -28,46 +28,33 @@ exports.register = async (req, res, next) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const hashedOtp = await bcrypt.hash(otp, salt);
+    // Create user in the database directly
+    const user = await User.create({
+      name,
+      email: emailKey,
+      password: hashedPassword,
+      isVerified: true
+    });
 
-    // Store in TemporaryUser (upsert so subsequent registration attempts with same email overwrite the old request)
-    await TemporaryUser.findOneAndUpdate(
-      { email: email.toLowerCase().trim() },
-      {
-        name,
-        password: hashedPassword,
-        otp: hashedOtp,
-        attempts: 0,
-        lastSentAt: Date.now(),
-        createdAt: Date.now() // resets 10-minute expiry
-      },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
-
-    // Send OTP to email asynchronously in the background (no await)
-    sendMail({
-      to: email.toLowerCase().trim(),
-      subject: 'GradForge Email Verification Code',
-      text: `Your GradForge verification OTP code is: ${otp}. It will expire in 10 minutes.`,
-      html: `
-        <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-          <h2 style="color: #6d28d9; text-align: center;">Welcome to GradForge!</h2>
-          <p>Thank you for signing up. Please verify your email address using the following 6-digit OTP code:</p>
-          <div style="text-align: center; margin: 30px 0;">
-            <span style="font-size: 32px; font-family: monospace; font-weight: bold; letter-spacing: 5px; background: #f3f4f6; padding: 10px 20px; border-radius: 5px; color: #1f2937;">${otp}</span>
-          </div>
-          <p style="color: #6b7280; font-size: 12px; text-align: center;">This code is valid for 10 minutes. If you did not request this code, please ignore this email.</p>
-        </div>
-      `
-    }).catch(err => {
-      console.error('[ASYNC SMTP ERROR] Failed to send email in background:', err.message);
+    // Create free subscription record
+    await Subscription.create({
+      userId: user._id,
+      plan: 'free',
+      status: 'active'
     });
 
     res.status(201).json({
       success: true,
-      message: 'Verification OTP sent to your email.',
-      verificationToken: otp // Exposing token directly for on-screen prompt bypass helper
+      message: 'User registered successfully.',
+      token: generateToken(user._id),
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+        isVerified: user.isVerified,
+        plan: user.plan
+      }
     });
   } catch (error) {
     next(error);
@@ -94,78 +81,6 @@ exports.login = async (req, res, next) => {
 
     res.json({
       success: true,
-      token: generateToken(user._id),
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-        isVerified: user.isVerified,
-        plan: user.plan
-      }
-    });
-  } catch (error) {
-    next(error);
-  }
-};
-
-exports.verifyEmail = async (req, res, next) => {
-  try {
-    const { token, email } = req.body;
-
-    if (!token) {
-      return res.status(400).json({ success: false, message: 'OTP is required' });
-    }
-    if (!email) {
-      return res.status(400).json({ success: false, message: 'Email address is required' });
-    }
-
-    const tempUser = await TemporaryUser.findOne({ email: email.toLowerCase().trim() });
-    if (!tempUser) {
-      return res.status(400).json({ success: false, message: 'Invalid or expired verification OTP' });
-    }
-
-    // Check failed attempts
-    if (tempUser.attempts >= 5) {
-      await TemporaryUser.deleteOne({ _id: tempUser._id });
-      return res.status(400).json({ success: false, message: 'Too many failed verification attempts. Please sign up again.' });
-    }
-
-    // Increment attempts count
-    tempUser.attempts += 1;
-    await tempUser.save();
-
-    // Verify OTP
-    const isOtpMatch = await bcrypt.compare(token, tempUser.otp);
-    if (!isOtpMatch) {
-      return res.status(400).json({ success: false, message: 'Incorrect verification OTP' });
-    }
-
-    // Check if user already exists (just in case they registered/verified in a concurrent request)
-    let user = await User.findOne({ email: tempUser.email });
-    if (!user) {
-      // Create user in the database
-      user = await User.create({
-        name: tempUser.name,
-        email: tempUser.email,
-        password: tempUser.password, // already hashed
-        isVerified: true
-      });
-
-      // Create free subscription record
-      await Subscription.create({
-        userId: user._id,
-        plan: 'free',
-        status: 'active'
-      });
-    }
-
-    // Delete temporary user record
-    await TemporaryUser.deleteOne({ _id: tempUser._id });
-
-    res.json({
-      success: true,
-      message: 'Email verified and logged in successfully.',
       token: generateToken(user._id),
       user: {
         id: user._id,
@@ -261,70 +176,4 @@ exports.getMe = async (req, res, next) => {
   }
 };
 
-exports.resendVerification = async (req, res, next) => {
-  try {
-    const { email } = req.body;
 
-    if (!email) {
-      return res.status(400).json({ success: false, message: 'Email address is required' });
-    }
-
-    const emailKey = email.toLowerCase().trim();
-
-    // Check if the user is already verified and exists in permanent database
-    const user = await User.findOne({ email: emailKey });
-    if (user) {
-      return res.status(400).json({ success: false, message: 'Account is already verified' });
-    }
-
-    // Check if there is an active temporary registration
-    const tempUser = await TemporaryUser.findOne({ email: emailKey });
-    if (!tempUser) {
-      return res.status(404).json({ success: false, message: `No pending registration found for email: ${email}. Please sign up first.` });
-    }
-
-    // Rate Limiting: 60 seconds between resends
-    const timeSinceLastSend = Date.now() - new Date(tempUser.lastSentAt).getTime();
-    if (timeSinceLastSend < 60000) {
-      const secondsLeft = Math.ceil((60000 - timeSinceLastSend) / 1000);
-      return res.status(429).json({ success: false, message: `Please wait ${secondsLeft} seconds before requesting a new OTP.` });
-    }
-
-    const otp = Math.floor(100000 + Math.random() * 900000).toString();
-    const salt = await bcrypt.genSalt(10);
-    const hashedOtp = await bcrypt.hash(otp, salt);
-
-    tempUser.otp = hashedOtp;
-    tempUser.attempts = 0;
-    tempUser.lastSentAt = Date.now();
-    tempUser.createdAt = Date.now(); // reset the 10-minute expiry
-    await tempUser.save();
-
-    // Resend the email asynchronously in the background (no await)
-    sendMail({
-      to: tempUser.email,
-      subject: 'GradForge Email Verification Code (Resend)',
-      text: `Your new GradForge verification OTP code is: ${otp}. It will expire in 10 minutes.`,
-      html: `
-        <div style="font-family: sans-serif; max-width: 500px; margin: 0 auto; padding: 20px; border: 1px solid #e0e0e0; border-radius: 10px;">
-          <h2 style="color: #6d28d9; text-align: center;">Welcome to GradForge!</h2>
-          <p>Please use the following 6-digit OTP code to verify your email address:</p>
-          <div style="text-align: center; margin: 30px 0;">
-            <span style="font-size: 32px; font-family: monospace; font-weight: bold; letter-spacing: 5px; background: #f3f4f6; padding: 10px 20px; border-radius: 5px; color: #1f2937;">${otp}</span>
-          </div>
-          <p style="color: #6b7280; font-size: 12px; text-align: center;">This code is valid for 10 minutes. If you did not request this code, please ignore this email.</p>
-        </div>
-      `
-    }).catch(err => {
-      console.error('[ASYNC SMTP ERROR] Failed to resend email in background:', err.message);
-    });
-
-    res.json({
-      success: true,
-      message: 'Verification OTP sent successfully.',
-      verificationToken: otp
-    });
-  } catch (error) {
-    next(error);
-  }
-};

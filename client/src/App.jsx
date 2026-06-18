@@ -17,7 +17,6 @@ import Login from './pages/Login';
 import Register from './pages/Register';
 import ForgotPassword from './pages/ForgotPassword';
 import ResetPassword from './pages/ResetPassword';
-import VerifyEmail from './pages/VerifyEmail';
 import About from './pages/About';
 import Contact from './pages/Contact';
 import FAQ from './pages/FAQ';
@@ -54,7 +53,6 @@ function App() {
             <Route path="/register" element={<MainLayout><Register /></MainLayout>} />
             <Route path="/forgot-password" element={<MainLayout><ForgotPassword /></MainLayout>} />
             <Route path="/reset-password" element={<MainLayout><ResetPassword /></MainLayout>} />
-            <Route path="/verify-email" element={<MainLayout><VerifyEmail /></MainLayout>} />
 
             {/* Public Standalone Portfolios */}
             <Route path="/portfolio/:slug" element={<PublicPortfolio />} />

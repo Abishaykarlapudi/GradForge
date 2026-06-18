@@ -20,8 +20,7 @@ const Register = () => {
     try {
       const res = await register(name, email, password);
       if (res.success) {
-        // Front to Back: navigate immediately to verify-email
-        navigate(`/verify-email?email=${encodeURIComponent(email)}`);
+        navigate('/dashboard');
       } else {
         setError(res.message || 'Registration failed.');
       }

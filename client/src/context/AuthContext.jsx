@@ -55,21 +55,16 @@ export const AuthProvider = ({ children }) => {
 
   const register = async (name, email, password) => {
     const res = await axios.post('/api/auth/register', { name, email, password });
+    if (res.data.success) {
+      setAuthToken(res.data.token);
+      setUser(res.data.user);
+    }
     return res.data;
   };
 
   const logout = () => {
     setAuthToken(null);
     setUser(null);
-  };
-
-  const verifyEmail = async (token, email) => {
-    const res = await axios.post('/api/auth/verify-email', { token, email });
-    if (res.data.success && res.data.token) {
-      setAuthToken(res.data.token);
-      setUser(res.data.user);
-    }
-    return res.data;
   };
 
   const forgotPassword = async (email) => {
@@ -98,7 +93,6 @@ export const AuthProvider = ({ children }) => {
       login,
       register,
       logout,
-      verifyEmail,
       forgotPassword,
       resetPassword,
       checkoutPremium,
