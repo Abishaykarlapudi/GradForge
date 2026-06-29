@@ -44,7 +44,7 @@ async function callAI(prompt, systemInstruction = "You are GradForge AI, an expe
 async function callGemini(prompt, systemInstruction) {
   try {
     const model = genAI.getGenerativeModel({ 
-      model: 'gemini-1.5-flash',
+      model: process.env.GEMINI_MODEL || 'gemini-2.5-flash',
       systemInstruction: systemInstruction
     });
     const result = await model.generateContent(prompt);
